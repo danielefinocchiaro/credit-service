@@ -18,6 +18,9 @@ spec:
       imagePullSecrets:
         - name: docker-keix
       containers:
+        - args:
+            - node
+            - service/credits/run.js
         - env:
             - name: HOST
               value: "message-store.default.svc.cluster.local:8080"

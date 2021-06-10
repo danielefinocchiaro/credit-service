@@ -1,8 +1,11 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
-import { runCredits } from "../src/credits";
-import { runBalanceProjector } from "../src/credits/projector";
-import { CommandTypeCredit, EventTypeCredit } from "../src/credits/types";
+import { runCredits } from "../src/service/credits";
+import { runBalanceProjector } from "../src/service/credits/projector";
+import {
+  CommandTypeCredit,
+  EventTypeCredit,
+} from "../src/service/credits/types";
 
 it("should return 0 at start", async () => {
   let idAccount1 = v4();

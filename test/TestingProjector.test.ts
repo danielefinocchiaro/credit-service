@@ -1,6 +1,6 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
-import { EventTypeCredit } from "../src/credits/types";
+import { EventTypeCredit } from "../src/service/credits/types";
 import {
   runCardExistProjector,
   runVerifyAmountProjector,
@@ -8,8 +8,8 @@ import {
   runVerifyErrorProjector,
   runVerifyPendingProjector,
   runVerifyProcessingProjector,
-} from "../src/giftCard/projector";
-import { CommandTypeCard, EventTypeCard } from "../src/giftCard/types";
+} from "../src/service/giftCard/projector";
+import { CommandTypeCard, EventTypeCard } from "../src/service/giftCard/types";
 
 it("should find a existing card", async () => {
   let idCard = v4();

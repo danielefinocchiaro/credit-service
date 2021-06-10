@@ -4,8 +4,8 @@ import {
   readLastMessage,
   combineSubscriber,
 } from "@keix/message-store-client";
-import { runBalanceProjector } from "./projector";
-import { EventCredits, EventTypeCredit } from "./types";
+import { runBalanceProjector } from "../../service/credits/projector";
+import { EventCredits, EventTypeCredit } from "../../service/credits/types";
 import { createRedisClient } from "@keixdata/common";
 
 let redisClient = createRedisClient();

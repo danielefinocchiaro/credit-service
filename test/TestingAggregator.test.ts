@@ -1,7 +1,14 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
-import { getBalance, run, getTransactions } from "../src/credits/aggregator";
-import { CommandTypeCredit, EventTypeCredit } from "../src/credits/types";
+import {
+  getBalance,
+  run,
+  getTransactions,
+} from "../src/aggregator/credits/aggregator";
+import {
+  CommandTypeCredit,
+  EventTypeCredit,
+} from "../src/service/credits/types";
 
 /* let stop: () => void | null = () => null;
 afterEach(() => {

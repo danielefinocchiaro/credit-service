@@ -7,7 +7,7 @@ import {
   combineSubscriber,
 } from "@keix/message-store-client";
 import { v4 } from "uuid";
-import { runBalanceProjector } from "../credits/projector";
+import { runBalanceProjector } from "./projector";
 
 import { CommandCredits, CommandTypeCredit, EventTypeCredit } from "./types";
 

@@ -1,8 +1,11 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
-import { runGiftCard } from "../src/giftCard";
-import { CommandTypeCredit, EventTypeCredit } from "../src/credits/types";
-import { CommandTypeCard, EventTypeCard } from "../src/giftCard/types";
+import { runGiftCard } from "../src/service/giftCard";
+import {
+  CommandTypeCredit,
+  EventTypeCredit,
+} from "../src/service/credits/types";
+import { CommandTypeCard, EventTypeCard } from "../src/service/giftCard/types";
 
 it("should add a card", async () => {
   let idCard = v4();
