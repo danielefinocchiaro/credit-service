@@ -58,6 +58,8 @@ jobs:
         env:
           ELASTIC_HOST: ${{ secrets.DEV_ELASTIC_ENDPOINT }}
           ELASTIC_PORT: 80
+          REDIS_HOST: ${{ secrets.DEV_REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.DEV_REDIS_PORT }}
 
       - name: Build
         run: yarn build
