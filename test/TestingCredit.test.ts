@@ -135,6 +135,36 @@ it("should use a number of credits to a specific account if the account have the
   expect(await runBalanceProjector(idAccount1)).toEqual(100);
 });
 
+it("should use all the credits available", async () => {
+  let idAccount1 = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCredit.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 150,
+      },
+    },
+    {
+      type: CommandTypeCredit.USE_CREDITS,
+      stream_name: "creditAccount:command-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 150,
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(runCredits, () => {
+    let event = testUtils.getStreamMessages("creditAccount");
+    expect(event).toHaveLength(2);
+    expect(event[1].type).toEqual(EventTypeCredit.CREDITS_USED);
+  });
+
+  expect(await runBalanceProjector(idAccount1)).toEqual(0);
+});
+
 it("should use a number of credits to a specific account with a transaction id", async () => {
   let idAccount1 = v4();
   let idTrans = v4();

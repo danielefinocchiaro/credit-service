@@ -130,7 +130,7 @@ jobs:
         with:
           files: "k8s/deployment_aggregator.yaml"
         env:
-          spec.template.spec.containers.0.image: "keixdata/project:${{ github.run_number }}"
+          spec.template.spec.containers.0.image: "keixdata/credits:${{ github.run_number }}"
 
       - name: Rancher Deploy
         run: rancher kubectl apply -f k8s/deployment_aggregator.yaml

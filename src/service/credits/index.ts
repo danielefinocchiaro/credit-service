@@ -38,7 +38,7 @@ async function handler(cmd: CommandCredits) {
       }
     case CommandTypeCredit.USE_CREDITS:
       let balance = await runBalanceProjector(cmd.data.id);
-      if (balance >= MIN_USE_CREDITS_AMOUNT && balance - cmd.data.amount > 0) {
+      if (balance >= MIN_USE_CREDITS_AMOUNT && balance - cmd.data.amount >= 0) {
         return emitEvent({
           category: "creditAccount",
           id: cmd.data.id,
