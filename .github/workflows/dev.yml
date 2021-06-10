@@ -5,12 +5,12 @@ name: Development
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
-  dev:
+  build:
     runs-on: ubuntu-latest
 
     strategy:
@@ -38,16 +38,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - name: Installing Rancher CLI...
-        run: wget -nv https://releases.rancher.com/cli2/v$RANCHER_VERSION/rancher-linux-amd64-v$RANCHER_VERSION.tar.gz; tar -xvzf rancher-linux-amd64-v$RANCHER_VERSION.tar.gz; sudo cp rancher-v$RANCHER_VERSION/rancher /usr/local/bin/rancher
-        env:
-          RANCHER_VERSION: 2.4.3
-
-      - name: Login to Rancher CLI...
-        run: rancher login ${{ secrets.RANCHER_ENDPOINT }} --token ${{ secrets.RANCHER_TOKEN }} --context $PROJECT_ID
-        env:
-          PROJECT_ID: c-f2pvq:p-mqrvg
-
       - name: Installing Dependencies...
         run: yarn
         env:
@@ -64,28 +54,83 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Publish
-        run: npm publish || echo "::warning::Skipping package publishing because version already exists..."
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Docker Build and Push
         uses: docker/build-push-action@v1.1.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: keixdata/credit-service
+          repository: keixdata/credits
           tags: ${{ github.run_number }},latest
-          cache_froms: keixdata/credit-service:latest
+          cache_froms: keixdata/credits:latest
         env:
           DOCKER_BUILDKIT: 1
+  service:
+    needs: build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@keixdata"
+      - name: Installing Rancher CLI...
+        run: wget -nv https://releases.rancher.com/cli2/v$RANCHER_VERSION/rancher-linux-amd64-v$RANCHER_VERSION.tar.gz; tar -xvzf rancher-linux-amd64-v$RANCHER_VERSION.tar.gz; sudo cp rancher-v$RANCHER_VERSION/rancher /usr/local/bin/rancher
+        env:
+          RANCHER_VERSION: 2.4.3
+
+      - name: Login to Rancher CLI...
+        run: rancher login ${{ secrets.RANCHER_ENDPOINT }} --token ${{ secrets.RANCHER_TOKEN }} --context $PROJECT_ID
+        env:
+          PROJECT_ID: c-f2pvq:p-mqrvg
 
       - name: Preparing Deploy
         uses: microsoft/variable-substitution@v1
         with:
-          files: "deployment.yaml"
+          files: "k8s/deployment_service.yaml"
         env:
-          spec.template.spec.containers.0.image: "keixdata/credit-service:${{ github.run_number }}"
+          spec.template.spec.containers.0.image: "keixdata/credits:${{ github.run_number }}"
 
       - name: Rancher Deploy
-        run: rancher kubectl apply -f deployment.yaml
+        run: rancher kubectl apply -f k8s/deployment_service.yaml
+  aggregator:
+    needs: build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@keixdata"
+      - name: Installing Rancher CLI...
+        run: wget -nv https://releases.rancher.com/cli2/v$RANCHER_VERSION/rancher-linux-amd64-v$RANCHER_VERSION.tar.gz; tar -xvzf rancher-linux-amd64-v$RANCHER_VERSION.tar.gz; sudo cp rancher-v$RANCHER_VERSION/rancher /usr/local/bin/rancher
+        env:
+          RANCHER_VERSION: 2.4.3
+
+      - name: Login to Rancher CLI...
+        run: rancher login ${{ secrets.RANCHER_ENDPOINT }} --token ${{ secrets.RANCHER_TOKEN }} --context $PROJECT_ID
+        env:
+          PROJECT_ID: c-f2pvq:p-mqrvg
+
+      - name: Preparing Deploy
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: "k8s/deployment_aggregator.yaml"
+        env:
+          spec.template.spec.containers.0.image: "keixdata/project:${{ github.run_number }}"
+
+      - name: Rancher Deploy
+        run: rancher kubectl apply -f k8s/deployment_aggregator.yaml

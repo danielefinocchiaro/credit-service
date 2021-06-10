@@ -6,9 +6,9 @@ import {
 } from "@keix/message-store-client";
 import { runBalanceProjector } from "./projector";
 import { EventCredits, EventTypeCredit } from "./types";
-import Redis from "ioredis";
+import { createRedisClient } from "@keixdata/common";
 
-let redisClient = new Redis();
+let redisClient = createRedisClient();
 
 interface UserTransaction {
   id: string;

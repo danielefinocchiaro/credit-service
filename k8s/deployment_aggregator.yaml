@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: credits-aggregator
+  labels:
+    app: credits-aggregator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: credits-aggregator
+  template:
+    metadata:
+      labels:
+        app: credits-aggregator
+    spec:
+      imagePullSecrets:
+        - name: docker-keix
+      containers:
+        - env:
+            - name: HOST
+              value: "message-store.default.svc.cluster.local:8080"
+            - name: REDIS_HOST
+              value: "redis.default.svc.cluster.local"
+            - name: REDIS_PORT
+              value: "6379"
+          name: credits-aggregator
+          image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
