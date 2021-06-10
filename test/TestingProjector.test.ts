@@ -1,5 +1,6 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
+import { EventTypeCredit } from "../src/credits/types";
 import {
   runCardExistProjector,
   runVerifyAmountProjector,

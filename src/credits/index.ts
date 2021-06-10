@@ -11,9 +11,8 @@ import { runBalanceProjector } from "../credits/projector";
 
 import { CommandCredits, CommandTypeCredit, EventTypeCredit } from "./types";
 
-async function businnesLogic(cmd: CommandCredits) {
+async function handler(cmd: CommandCredits) {
   const MIN_USE_CREDITS_AMOUNT = 100;
-  console.log("=>", cmd);
 
   if (
     await isLastMessageAfterGlobalPosition(`creditAccount-${cmd.data.id}`, cmd)
@@ -73,7 +72,7 @@ export async function runCredits() {
       {
         streamName: "creditAccount:command",
       },
-      businnesLogic
+      handler
     )
   );
 }
