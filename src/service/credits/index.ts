@@ -10,6 +10,7 @@ import { v4 } from "uuid";
 import { runBalanceProjector } from "./projector";
 
 import { CommandCredits, CommandTypeCredit, EventTypeCredit } from "./types";
+import { CommandSchedulerCommandType, SchedulerRate } from "../scheduler/types";
 
 async function handler(cmd: CommandCredits) {
   const MIN_USE_CREDITS_AMOUNT = 100;
@@ -17,6 +18,9 @@ async function handler(cmd: CommandCredits) {
   if (
     await isLastMessageAfterGlobalPosition(`creditAccount-${cmd.data.id}`, cmd)
   ) {
+    return;
+  }
+  if (await isLastMessageAfterGlobalPosition(`commandScheduler:command`, cmd)) {
     return;
   }
 
@@ -31,6 +35,8 @@ async function handler(cmd: CommandCredits) {
             id: cmd.data.id,
             transactionId: cmd.data.transactionId ?? v4(),
             amount: cmd.data.amount,
+            delayed: cmd.data.delayed ?? false,
+            validationDate: cmd.data.validationDate ?? new Date(),
           },
         });
       } else {
@@ -47,6 +53,7 @@ async function handler(cmd: CommandCredits) {
             id: cmd.data.id,
             transactionId: cmd.data.transactionId ?? v4(),
             amount: cmd.data.amount,
+            validationDate: cmd.data.validationDate ?? new Date(),
           },
         });
       } else {
@@ -57,12 +64,45 @@ async function handler(cmd: CommandCredits) {
           data: {
             id: cmd.data.id,
             type:
-              balance >= MIN_USE_CREDITS_AMOUNT
-                ? "AmmontoMinimoNonRaggiunto"
-                : "FondiNonSufficienti",
+              balance - cmd.data.amount <= 0
+                ? "NotEnoughFunds"
+                : "MinimumAmountNotReached",
           },
         });
       }
+    case CommandTypeCredit.EARN_DELAYED_CREDIT: {
+      let transactionId = cmd.data.transactionId ?? v4();
+      await sendCommand({
+        command: CommandSchedulerCommandType.SCHEDULE_COMMAND,
+        category: "commandScheduler",
+        data: {
+          id: cmd.data.id,
+          category: "creditAccount",
+          command: CommandTypeCredit.EARN_CREDITS,
+          commandData: {
+            id: cmd.data.id,
+            transactionId: transactionId,
+            amount: cmd.data.amount,
+            delayed: true,
+            validationDate: cmd.data.validationDate,
+          },
+          date: cmd.data.validationDate,
+          rate: SchedulerRate.NONE,
+        },
+      });
+      return emitEvent({
+        category: "creditAccount",
+        id: cmd.data.id,
+        event: EventTypeCredit.CREDITS_SCHEDULED,
+        data: {
+          id: cmd.data.id,
+          transactionId: transactionId,
+          amount: cmd.data.amount,
+          validationDate: cmd.data.validationDate,
+          delayed: false,
+        },
+      });
+    }
   }
 }
 

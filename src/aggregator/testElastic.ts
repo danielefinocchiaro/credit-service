@@ -1,6 +1,6 @@
-import { createElasticClient } from "@keixdata/common";
+import { Client } from "@elastic/elasticsearch";
 
-const client = createElasticClient();
+const client = new Client({ node: "https://dev.elastic.keix.com" });
 
 async function run() {
   client.index({

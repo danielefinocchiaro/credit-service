@@ -8,6 +8,7 @@ export async function runBalanceProjector(
   const MAX_USE_CREDITS_DELAY = 365;
 
   let datetime = new Date();
+  let todayTime = new Date();
   datetime.setDate(datetime.getDay() - MAX_USE_CREDITS_DELAY);
   function reducer(res: number, next: EventCredits) {
     if (next.time >= datetime) {
@@ -25,3 +26,43 @@ export async function runBalanceProjector(
     0
   );
 }
+
+export async function runBalancePendingProjector(
+  id: string,
+  until?: number
+): Promise<number> {
+  let todayTime = new Date();
+
+  function reducer(res: number, next: EventCredits) {
+    if (next.type === EventTypeCredit.CREDITS_SCHEDULED) {
+      if (next.data.validationDate > todayTime) {
+        res += next.data.amount;
+      }
+    }
+
+    return Math.max(0, res);
+  }
+  return runProjector(
+    { streamName: `creditAccount-${id}`, untilPosition: until },
+    reducer,
+    0
+  );
+}
+
+/* export async function runIsScheduled(
+  id: string,
+  until?: number
+): Promise<Boolean> {
+  function reducer(res: Boolean, next: EventCredits) {
+    if (next.type === EventTypeCredit.CREDITS_SCHEDULED) {
+      res = next.data.transactionId === id;
+    }
+    return res;
+  }
+  return runProjector(
+    { streamName: `creditAccount-${id}`, untilPosition: until },
+    reducer,
+    false
+  );
+}
+ */

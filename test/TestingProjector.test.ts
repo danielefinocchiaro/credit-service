@@ -1,5 +1,14 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
+import {
+  getBalance,
+  getPendingBalance,
+  run,
+} from "../src/aggregator/credits/aggregator";
+import {
+  runBalancePendingProjector,
+  runBalanceProjector,
+} from "../src/service/credits/projector";
 import { EventTypeCredit } from "../src/service/credits/types";
 import {
   runCardExistProjector,
@@ -260,4 +269,90 @@ it("should return true if there is an error", async () => {
   ]);
 
   expect(await runVerifyErrorProjector(idTrans)).toEqual(true);
+});
+
+it("should return the balance delayed", async () => {
+  let idAccount1 = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCredit.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 500,
+        transactionId: v4(),
+      },
+    },
+    {
+      type: EventTypeCredit.CREDITS_SCHEDULED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 300,
+        transactionId: v4(),
+        validationDate: new Date(2022, 1, 1),
+      },
+    },
+    {
+      type: EventTypeCredit.CREDITS_SCHEDULED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 200,
+        transactionId: v4(),
+        validationDate: new Date(2022, 1, 1),
+      },
+    },
+  ]);
+
+  expect(await runBalancePendingProjector(idAccount1)).toEqual(500);
+  expect(await runBalanceProjector(idAccount1)).toEqual(500);
+  //run();
+  await testUtils.expectIdempotency(run, async () => {
+    expect(await getBalance(idAccount1)).toEqual("500");
+    expect(await getPendingBalance(idAccount1)).toEqual("500");
+  });
+});
+
+it("should return the balance in part delayed", async () => {
+  let idAccount1 = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCredit.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 100,
+        transactionId: v4(),
+      },
+    },
+    {
+      type: EventTypeCredit.CREDITS_SCHEDULED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 200,
+        transactionId: v4(),
+        validationDate: new Date(2020, 1, 1),
+      },
+    },
+    {
+      type: EventTypeCredit.CREDITS_SCHEDULED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 300,
+        transactionId: v4(),
+        validationDate: new Date(2022, 1, 1),
+      },
+    },
+  ]);
+
+  expect(await runBalancePendingProjector(idAccount1)).toEqual(300);
+  expect(await runBalanceProjector(idAccount1)).toEqual(100);
+  //run();
+  await testUtils.expectIdempotency(run, async () => {
+    expect(await getPendingBalance(idAccount1)).toEqual("300");
+    expect(await getBalance(idAccount1)).toEqual("100");
+  });
 });

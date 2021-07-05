@@ -1,11 +1,15 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
 import { runCredits } from "../src/service/credits";
-import { runBalanceProjector } from "../src/service/credits/projector";
+import {
+  runBalancePendingProjector,
+  runBalanceProjector,
+} from "../src/service/credits/projector";
 import {
   CommandTypeCredit,
   EventTypeCredit,
 } from "../src/service/credits/types";
+import { CommandSchedulerCommandType } from "../src/service/scheduler/types";
 
 it("should return 0 at start", async () => {
   let idAccount1 = v4();
@@ -34,6 +38,34 @@ it("should earn a number of credits to a specific account", async () => {
     expect(event[0].data.id).toEqual(idAccount1);
     expect(event[0].data.amount).toEqual(30);
   });
+});
+
+it("should earn a number of credits to a specific account only if the validation date is passed", async () => {
+  let idAccount1 = v4();
+  testUtils.setupMessageStore([
+    {
+      type: CommandTypeCredit.EARN_DELAYED_CREDIT,
+      stream_name: "creditAccount:command-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amount: 30,
+        validationDate: new Date(2022, 1, 1),
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(runCredits, () => {
+    let command = testUtils.getStreamMessages("commandScheduler:command");
+    let event = testUtils.getStreamMessages("creditAccount");
+    expect(event).toHaveLength(1);
+    expect(event[0].type).toEqual(EventTypeCredit.CREDITS_SCHEDULED);
+    expect(command).toHaveLength(1);
+    expect(command[0].type).toEqual(
+      CommandSchedulerCommandType.SCHEDULE_COMMAND
+    );
+    expect(command[0].data.id).toEqual(idAccount1);
+  });
+  expect(await runBalanceProjector(idAccount1)).toEqual(0);
 });
 
 it("should earn a number of credits to a specific account with a transaction id", async () => {
@@ -99,7 +131,7 @@ it("shouldn't use a number of credits of a specific account if isn't up to minim
     expect(event).toHaveLength(1);
     expect(event[0].type).toEqual(EventTypeCredit.CREDITS_ERROR);
     expect(event[0].data.id).toEqual(idAccount1);
-    expect(event[0].data.type).toEqual("FondiNonSufficienti");
+    expect(event[0].data.type).toEqual("NotEnoughFunds");
   });
 });
 
@@ -112,6 +144,7 @@ it("should use a number of credits to a specific account if the account have the
       data: {
         id: idAccount1,
         amount: 100,
+        validationDate: new Date(),
       },
     },
     {
@@ -129,7 +162,7 @@ it("should use a number of credits to a specific account if the account have the
     expect(event).toHaveLength(2);
     expect(event[1].type).toEqual(EventTypeCredit.CREDITS_ERROR);
     expect(event[1].data.id).toEqual(idAccount1);
-    expect(event[1].data.type).toEqual("AmmontoMinimoNonRaggiunto");
+    expect(event[1].data.type).toEqual("NotEnoughFunds");
   });
 
   expect(await runBalanceProjector(idAccount1)).toEqual(100);
@@ -144,6 +177,7 @@ it("should use all the credits available", async () => {
       data: {
         id: idAccount1,
         amount: 150,
+        validationDate: new Date(),
       },
     },
     {
@@ -176,6 +210,7 @@ it("should use a number of credits to a specific account with a transaction id",
         id: idAccount1,
         amount: 130,
         transactionId: idTrans,
+        validationDate: new Date(),
       },
     },
     {
@@ -209,6 +244,7 @@ it("should calculate the balance of a specific account", async () => {
       data: {
         id: idAccount1,
         amount: 30,
+        validationDate: new Date(),
       },
     },
     {
@@ -217,6 +253,7 @@ it("should calculate the balance of a specific account", async () => {
       data: {
         id: idAccount2,
         amount: 30,
+        validationDate: new Date(),
       },
     },
     {
@@ -225,6 +262,7 @@ it("should calculate the balance of a specific account", async () => {
       data: {
         id: idAccount1,
         amount: 20,
+        validationDate: new Date(),
       },
     },
     {
@@ -233,6 +271,7 @@ it("should calculate the balance of a specific account", async () => {
       data: {
         id: idAccount1,
         amount: 50,
+        validationDate: new Date(),
       },
     },
   ]);
@@ -250,6 +289,7 @@ it("should calculate the balance (mix of use and earn) of a specific account", a
       data: {
         id: idAccount1,
         amount: 70,
+        validationDate: new Date(),
       },
     },
     {
@@ -258,6 +298,7 @@ it("should calculate the balance (mix of use and earn) of a specific account", a
       data: {
         id: idAccount2,
         amount: 30,
+        validationDate: new Date(),
       },
     },
     {
@@ -266,6 +307,7 @@ it("should calculate the balance (mix of use and earn) of a specific account", a
       data: {
         id: idAccount1,
         amount: 50,
+        validationDate: new Date(),
       },
     },
     {
@@ -292,6 +334,7 @@ it("should calculate the balance of a specific account only if the deadline is v
       data: {
         id: idAccount1,
         amount: 70,
+        validationDate: timePast,
       },
       time: timePast,
     },
@@ -301,6 +344,7 @@ it("should calculate the balance of a specific account only if the deadline is v
       data: {
         id: idAccount1,
         amount: 300,
+        validationDate: new Date(),
       },
     },
     {
@@ -309,6 +353,7 @@ it("should calculate the balance of a specific account only if the deadline is v
       data: {
         id: idAccount1,
         amount: 50,
+        validationDate: timePast,
       },
       time: timePast,
     },

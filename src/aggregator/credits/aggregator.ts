@@ -4,70 +4,139 @@ import {
   readLastMessage,
   combineSubscriber,
 } from "@keix/message-store-client";
-import { runBalanceProjector } from "../../service/credits/projector";
 import { EventCredits, EventTypeCredit } from "../../service/credits/types";
-import { createRedisClient } from "@keixdata/common";
+import Redis from "ioredis";
+import { Client, RequestParams, ApiResponse } from "@elastic/elasticsearch";
+import {
+  runBalancePendingProjector,
+  runBalanceProjector,
+} from "../../service/credits/projector";
 
-let redisClient = createRedisClient();
+let redisClient = new Redis();
+
+const elasticClient = new Client({ node: "https://dev.elastic.keix.com" });
+
+const ELASTICDBNAME = "usertxdaniele";
 
 interface UserTransaction {
   id: string;
   amount: number;
+  userId: string;
+  time: Date;
+  validationDate: Date;
+  delayed: boolean;
 }
 
 export async function getBalance(userId: string) {
   return await redisClient.hget("userBalance", userId);
 }
 
-export async function getTransactions(
-  userId: string
-): Promise<UserTransaction[]> {
-  let keyUser = `creditAccount/${userId}`;
-  let transactrionsList = await redisClient.lrange(
-    keyUser,
-    0,
-    await redisClient.llen(keyUser)
-  );
-
-  return transactrionsList.map((transaction) => {
-    return JSON.parse(transaction);
-  });
+export async function getPendingBalance(userId: string) {
+  return await redisClient.hget("userPendingBalance", userId);
 }
 
-export async function hasProcessedTransaction(
-  id: string,
-  transactionId: string
-): Promise<boolean> {
-  let transactions = await getTransactions(id);
-  return (
-    transactions.find((d: { id: string }) => d.id == transactionId) != null
-  );
+export async function getTransactions(userId: string, typeOrder: string) {
+  const params: RequestParams.Search = {
+    index: ELASTICDBNAME,
+    body: {
+      sort: [{ time: { order: typeOrder } }],
+      query: {
+        match: {
+          userId: userId,
+        },
+      },
+    },
+  };
+  return await (await elasticClient.search(params)).body.hits.hits;
 }
 
+export async function hasProcessedTransaction(transactionId: string) {
+  try {
+    let res = await elasticClient.get({
+      index: ELASTICDBNAME,
+      id: transactionId,
+    });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
 async function handler(event: EventCredits) {
   if (
     (event.type == EventTypeCredit.CREDITS_EARNED ||
-      event.type == EventTypeCredit.CREDITS_USED) &&
-    (await hasProcessedTransaction(event.data.id, event.data.transactionId))
+      event.type == EventTypeCredit.CREDITS_USED ||
+      event.type == EventTypeCredit.CREDITS_SCHEDULED) &&
+    (await hasProcessedTransaction(event.data.transactionId))
   ) {
     return;
   }
   switch (event.type) {
     case EventTypeCredit.CREDITS_EARNED: {
+      //if (event.position % 10 === 0 && event.position !== 0) {
+      // const balance = await runBalanceProjector(event.data.id);
+      //await redisClient.hset("userBalance", event.data.id, balance);
+      //} else {
       await redisClient.hincrby(
         "userBalance",
         event.data.id,
         event.data.amount
       );
+      // }
 
-      let key = `creditAccount/${event.data.id}`;
+      await redisClient.hset(
+        "userPendingBalance",
+        event.data.id,
+        await runBalancePendingProjector(event.data.id)
+      );
 
       let transaction: UserTransaction = {
         id: event.data.transactionId,
         amount: event.data.amount,
+        userId: event.data.id,
+        time: event.time,
+        delayed: false,
+        validationDate: event.data.validationDate ?? new Date(),
       };
 
-      return redisClient.rpush(key, JSON.stringify(transaction));
+      if (event.data.delayed) {
+        return await elasticClient.update({
+          index: ELASTICDBNAME,
+          id: event.data.transactionId,
+          refresh: true,
+          body: transaction,
+        });
+      } else {
+        return await elasticClient.index({
+          index: ELASTICDBNAME,
+          id: event.data.transactionId,
+          refresh: true,
+          body: transaction,
+        });
+      }
+    }
+
+    case EventTypeCredit.CREDITS_SCHEDULED: {
+      await redisClient.hset(
+        "userPendingBalance",
+        event.data.id,
+        await runBalancePendingProjector(event.data.id)
+      );
+
+      let transaction: UserTransaction = {
+        id: event.data.transactionId,
+        amount: -event.data.amount,
+        userId: event.data.id,
+        validationDate: event.data.validationDate,
+        time: event.time,
+        delayed: true,
+      };
+
+      return await elasticClient.index({
+        index: ELASTICDBNAME,
+        id: event.data.transactionId,
+        refresh: true,
+        body: transaction,
+      });
     }
 
     case EventTypeCredit.CREDITS_USED: {
@@ -77,14 +146,21 @@ async function handler(event: EventCredits) {
         -event.data.amount
       );
 
-      let key = `creditAccount/${event.data.id}`;
-
       let transaction: UserTransaction = {
         id: event.data.transactionId,
         amount: -event.data.amount,
+        userId: event.data.id,
+        time: event.time,
+        delayed: false,
+        validationDate: new Date(),
       };
 
-      return redisClient.rpush(key, JSON.stringify(transaction));
+      return await elasticClient.index({
+        index: ELASTICDBNAME,
+        id: event.data.transactionId,
+        refresh: true,
+        body: transaction,
+      });
     }
   }
 }
