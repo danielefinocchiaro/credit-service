@@ -290,7 +290,7 @@ it("should return the balance delayed", async () => {
         id: idAccount1,
         amount: 300,
         transactionId: v4(),
-        validationDate: new Date(2022, 1, 1),
+        creditDate: new Date(2022, 1, 1),
       },
     },
     {
@@ -300,7 +300,7 @@ it("should return the balance delayed", async () => {
         id: idAccount1,
         amount: 200,
         transactionId: v4(),
-        validationDate: new Date(2022, 1, 1),
+        creditDate: new Date(2022, 1, 1),
       },
     },
   ]);
@@ -333,7 +333,7 @@ it("should return the balance in part delayed", async () => {
         id: idAccount1,
         amount: 200,
         transactionId: v4(),
-        validationDate: new Date(2020, 1, 1),
+        creditDate: new Date(2020, 1, 1),
       },
     },
     {
@@ -343,7 +343,7 @@ it("should return the balance in part delayed", async () => {
         id: idAccount1,
         amount: 300,
         transactionId: v4(),
-        validationDate: new Date(2022, 1, 1),
+        creditDate: new Date(2022, 1, 1),
       },
     },
   ]);

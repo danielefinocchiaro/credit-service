@@ -6,7 +6,7 @@ import {
 } from "@keix/message-store-client";
 import { EventCredits, EventTypeCredit } from "../../service/credits/types";
 import Redis from "ioredis";
-import { Client, RequestParams, ApiResponse } from "@elastic/elasticsearch";
+import { Client, RequestParams } from "@elastic/elasticsearch";
 import {
   runBalancePendingProjector,
   runBalanceProjector,
@@ -23,7 +23,7 @@ interface UserTransaction {
   amount: number;
   userId: string;
   time: Date;
-  validationDate: Date;
+  creditDate: Date;
   delayed: boolean;
 }
 
@@ -79,6 +79,7 @@ async function handler(event: EventCredits) {
       await redisClient.hincrby(
         "userBalance",
         event.data.id,
+        //await runBalanceProjector(event.data.id)
         event.data.amount
       );
       // }
@@ -95,24 +96,15 @@ async function handler(event: EventCredits) {
         userId: event.data.id,
         time: event.time,
         delayed: false,
-        validationDate: event.data.validationDate ?? new Date(),
+        creditDate: event.data.creditDate ?? new Date(),
       };
 
-      if (event.data.delayed) {
-        return await elasticClient.update({
-          index: ELASTICDBNAME,
-          id: event.data.transactionId,
-          refresh: true,
-          body: transaction,
-        });
-      } else {
-        return await elasticClient.index({
-          index: ELASTICDBNAME,
-          id: event.data.transactionId,
-          refresh: true,
-          body: transaction,
-        });
-      }
+      return elasticClient.index({
+        index: ELASTICDBNAME,
+        id: event.data.transactionId,
+        refresh: true,
+        body: transaction,
+      });
     }
 
     case EventTypeCredit.CREDITS_SCHEDULED: {
@@ -126,12 +118,12 @@ async function handler(event: EventCredits) {
         id: event.data.transactionId,
         amount: -event.data.amount,
         userId: event.data.id,
-        validationDate: event.data.validationDate,
+        creditDate: event.data.creditDate,
         time: event.time,
         delayed: true,
       };
 
-      return await elasticClient.index({
+      return elasticClient.index({
         index: ELASTICDBNAME,
         id: event.data.transactionId,
         refresh: true,
@@ -143,6 +135,7 @@ async function handler(event: EventCredits) {
       await redisClient.hincrby(
         "userBalance",
         event.data.id,
+        //await runBalanceProjector(event.data.id)
         -event.data.amount
       );
 
@@ -152,10 +145,10 @@ async function handler(event: EventCredits) {
         userId: event.data.id,
         time: event.time,
         delayed: false,
-        validationDate: new Date(),
+        creditDate: new Date(),
       };
 
-      return await elasticClient.index({
+      return elasticClient.index({
         index: ELASTICDBNAME,
         id: event.data.transactionId,
         refresh: true,

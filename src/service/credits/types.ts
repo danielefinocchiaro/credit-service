@@ -13,7 +13,7 @@ export type EarnCredits = Message<
     amount: number;
     transactionId?: string;
     delayed?: Boolean;
-    validationDate?: Date;
+    creditDate?: Date;
   }
 >;
 
@@ -23,13 +23,13 @@ export type EarnDelayedCredit = Message<
     id: string;
     amount: number;
     transactionId?: string;
-    validationDate: Date;
+    creditDate: Date;
   }
 >;
 
 export type UseCredits = Message<
   CommandTypeCredit.USE_CREDITS,
-  { id: string; amount: number; transactionId?: string; validationDate?: Date }
+  { id: string; amount: number; transactionId?: string; creditDate?: Date }
 >;
 
 export type CommandCredits = EarnCredits | UseCredits | EarnDelayedCredit;
@@ -48,7 +48,7 @@ export type CreditsEarned = Message<
     amount: number;
     transactionId: string;
     delayed: Boolean;
-    validationDate: Date;
+    creditDate: Date;
   }
 >;
 export type CreditsUsed = Message<
@@ -61,7 +61,7 @@ export type CreditsScheduled = Message<
     id: string;
     amount: number;
     transactionId: string;
-    validationDate: Date;
+    creditDate: Date;
     delayed: Boolean;
   }
 >;

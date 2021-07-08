@@ -35,7 +35,7 @@ export async function runBalancePendingProjector(
 
   function reducer(res: number, next: EventCredits) {
     if (next.type === EventTypeCredit.CREDITS_SCHEDULED) {
-      if (next.data.validationDate > todayTime) {
+      if (next.data.creditDate > todayTime) {
         res += next.data.amount;
       }
     }

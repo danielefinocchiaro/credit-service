@@ -32,7 +32,7 @@ it("should return a positive balance (DESC)", async () => {
         amount: 30,
         transactionId: idTrans1,
         time: dateNow,
-        validationDate: dateNow,
+        creditDate: dateNow,
       },
     },
     {
@@ -44,7 +44,7 @@ it("should return a positive balance (DESC)", async () => {
         amount: 30,
         transactionId: idTrans2,
         time: datePast,
-        validationDate: datePast,
+        creditDate: datePast,
       },
     },
   ]);
@@ -60,7 +60,7 @@ it("should return a positive balance (DESC)", async () => {
       userId: idAccount1,
       time: dateNow.toISOString(),
       delayed: false,
-      validationDate: dateNow.toISOString(),
+      creditDate: dateNow.toISOString(),
     });
     expect(res[1]._source).toEqual({
       id: idTrans2,
@@ -68,7 +68,7 @@ it("should return a positive balance (DESC)", async () => {
       userId: idAccount1,
       time: datePast.toISOString(),
       delayed: false,
-      validationDate: datePast.toISOString(),
+      creditDate: datePast.toISOString(),
     });
   });
   /* 
@@ -94,7 +94,7 @@ it("should return a positive balance (ASC)", async () => {
         amount: 30,
         transactionId: idTrans1,
         time: dateNow,
-        validationDate: dateNow,
+        creditDate: dateNow,
       },
     },
     {
@@ -106,7 +106,7 @@ it("should return a positive balance (ASC)", async () => {
         amount: 30,
         transactionId: idTrans2,
         time: datePast,
-        validationDate: datePast,
+        creditDate: datePast,
       },
     },
   ]);
@@ -122,7 +122,7 @@ it("should return a positive balance (ASC)", async () => {
       userId: idAccount1,
       time: dateNow.toISOString(),
       delayed: false,
-      validationDate: dateNow.toISOString(),
+      creditDate: dateNow.toISOString(),
     });
     expect(res[0]._source).toEqual({
       id: idTrans2,
@@ -130,7 +130,7 @@ it("should return a positive balance (ASC)", async () => {
       userId: idAccount1,
       time: datePast.toISOString(),
       delayed: false,
-      validationDate: datePast.toISOString(),
+      creditDate: datePast.toISOString(),
     });
   });
   /* 
@@ -156,7 +156,7 @@ it("should return a 0 balance (DESC)", async () => {
         amount: 300,
         transactionId: idTrans1,
         time: dateNow,
-        validationDate: dateNow,
+        creditDate: dateNow,
       },
     },
     {
@@ -168,7 +168,7 @@ it("should return a 0 balance (DESC)", async () => {
         amount: 300,
         transactionId: idTrans2,
         time: datePast,
-        validationDate: datePast,
+        creditDate: datePast,
       },
     },
   ]);
@@ -182,7 +182,7 @@ it("should return a 0 balance (DESC)", async () => {
       userId: idAccount1,
       time: dateNow.toISOString(),
       delayed: false,
-      validationDate: dateNow.toISOString(),
+      creditDate: dateNow.toISOString(),
     });
     expect(res[1]._source).toEqual({
       id: idTrans2,
@@ -190,7 +190,7 @@ it("should return a 0 balance (DESC)", async () => {
       userId: idAccount1,
       time: datePast.toISOString(),
       delayed: false,
-      validationDate: datePast.toISOString(),
+      creditDate: datePast.toISOString(),
     });
   });
   /* 
@@ -217,7 +217,7 @@ it("should return balance (DESC)", async () => {
         amount: 300,
         transactionId: idTrans1,
         time: dateNow,
-        validationDate: dateNow,
+        creditDate: dateNow,
       },
     },
     {
@@ -229,7 +229,7 @@ it("should return balance (DESC)", async () => {
         amount: 100,
         transactionId: idTrans2,
         time: dateNow,
-        validationDate: dateNow,
+        creditDate: dateNow,
       },
     },
     {
@@ -241,7 +241,7 @@ it("should return balance (DESC)", async () => {
         amount: 200,
         transactionId: idTrans3,
         time: datePast,
-        validationDate: datePast,
+        creditDate: datePast,
       },
     },
   ]);
@@ -255,7 +255,7 @@ it("should return balance (DESC)", async () => {
       userId: idAccount1,
       time: dateNow.toISOString(),
       delayed: false,
-      validationDate: dateNow.toISOString(),
+      creditDate: dateNow.toISOString(),
     });
     expect(res[1]._source).toEqual({
       id: idTrans2,
@@ -263,7 +263,7 @@ it("should return balance (DESC)", async () => {
       userId: idAccount1,
       time: dateNow.toISOString(),
       delayed: false,
-      validationDate: dateNow.toISOString(),
+      creditDate: dateNow.toISOString(),
     });
     expect(res[2]._source).toEqual({
       id: idTrans3,
@@ -271,7 +271,7 @@ it("should return balance (DESC)", async () => {
       userId: idAccount1,
       time: datePast.toISOString(),
       delayed: false,
-      validationDate: datePast.toISOString(),
+      creditDate: datePast.toISOString(),
     });
   });
 
@@ -299,7 +299,7 @@ it("should return balance (ASC)", async () => {
         amount: 300,
         transactionId: idTrans1,
         time: dateNow,
-        validationDate: dateNow,
+        creditDate: dateNow,
       },
     },
     {
@@ -311,7 +311,7 @@ it("should return balance (ASC)", async () => {
         amount: 100,
         transactionId: idTrans2,
         time: datePast,
-        validationDate: datePast,
+        creditDate: datePast,
       },
     },
     {
@@ -323,7 +323,7 @@ it("should return balance (ASC)", async () => {
         amount: 200,
         transactionId: idTrans3,
         time: datePastPast,
-        validationDate: datePastPast,
+        creditDate: datePastPast,
       },
     },
   ]);
@@ -337,7 +337,7 @@ it("should return balance (ASC)", async () => {
       userId: idAccount1,
       time: dateNow.toISOString(),
       delayed: false,
-      validationDate: dateNow.toISOString(),
+      creditDate: dateNow.toISOString(),
     });
     expect(res[1]._source).toEqual({
       id: idTrans2,
@@ -345,7 +345,7 @@ it("should return balance (ASC)", async () => {
       userId: idAccount1,
       time: datePast.toISOString(),
       delayed: false,
-      validationDate: datePast.toISOString(),
+      creditDate: datePast.toISOString(),
     });
     expect(res[0]._source).toEqual({
       id: idTrans3,
@@ -353,7 +353,7 @@ it("should return balance (ASC)", async () => {
       userId: idAccount1,
       time: datePastPast.toISOString(),
       delayed: false,
-      validationDate: datePastPast.toISOString(),
+      creditDate: datePastPast.toISOString(),
     });
   });
 
