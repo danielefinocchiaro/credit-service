@@ -76,11 +76,10 @@ async function handler(event: EventCredits) {
       // const balance = await runBalanceProjector(event.data.id);
       //await redisClient.hset("userBalance", event.data.id, balance);
       //} else {
-      await redisClient.hincrby(
+      await redisClient.hset(
         "userBalance",
         event.data.id,
-        //await runBalanceProjector(event.data.id)
-        event.data.amount
+        await runBalanceProjector(event.data.id)
       );
       // }
 
@@ -132,11 +131,10 @@ async function handler(event: EventCredits) {
     }
 
     case EventTypeCredit.CREDITS_USED: {
-      await redisClient.hincrby(
+      await redisClient.hset(
         "userBalance",
         event.data.id,
-        //await runBalanceProjector(event.data.id)
-        -event.data.amount
+        await runBalanceProjector(event.data.id)
       );
 
       let transaction: UserTransaction = {

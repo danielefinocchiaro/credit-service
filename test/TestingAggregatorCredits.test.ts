@@ -19,8 +19,9 @@ it("should return a positive balance (DESC)", async () => {
   let idAccount1 = v4();
   let idTrans1 = v4();
   let idTrans2 = v4();
-  let dateNow = new Date(2021, 1, 1);
-  let datePast = new Date(2020, 1, 1);
+  let dateNow = new Date();
+  let datePast = new Date();
+  datePast.setDate(datePast.getDay() - 200);
 
   testUtils.setupMessageStore([
     {
@@ -82,8 +83,9 @@ it("should return a positive balance (ASC)", async () => {
   let idAccount1 = v4();
   let idTrans1 = v4();
   let idTrans2 = v4();
-  let dateNow = new Date(2021, 1, 1);
-  let datePast = new Date(2020, 1, 1);
+  let dateNow = new Date();
+  let datePast = new Date();
+  datePast.setDate(datePast.getDay() - 200);
   testUtils.setupMessageStore([
     {
       type: EventTypeCredit.CREDITS_EARNED,
@@ -114,7 +116,7 @@ it("should return a positive balance (ASC)", async () => {
   //stop = await run();
 
   await testUtils.expectIdempotency(run, async () => {
-    expect(await getBalance(idAccount1)).toEqual("60");
+    expect(await getBalance(idAccount1)).toEqual("30");
     let res = await getTransactions(idAccount1, "asc");
     expect(res[1]._source).toEqual({
       id: idTrans1,
@@ -144,8 +146,9 @@ it("should return a 0 balance (DESC)", async () => {
   let idAccount1 = v4();
   let idTrans1 = v4();
   let idTrans2 = v4();
-  let dateNow = new Date(2021, 1, 1);
-  let datePast = new Date(2020, 1, 1);
+  let dateNow = new Date();
+  let datePast = new Date();
+  dateNow.setDate(dateNow.getDay() - 200);
   testUtils.setupMessageStore([
     {
       type: EventTypeCredit.CREDITS_EARNED,
@@ -205,8 +208,9 @@ it("should return balance (DESC)", async () => {
   let idTrans1 = v4();
   let idTrans2 = v4();
   let idTrans3 = v4();
-  let dateNow = new Date(2021, 1, 1);
-  let datePast = new Date(2020, 1, 1);
+  let dateNow = new Date();
+  let datePast = new Date();
+  datePast.setDate(datePast.getDay() - 200);
   testUtils.setupMessageStore([
     {
       type: EventTypeCredit.CREDITS_EARNED,
@@ -286,9 +290,12 @@ it("should return balance (ASC)", async () => {
   let idTrans1 = v4();
   let idTrans2 = v4();
   let idTrans3 = v4();
-  let dateNow = new Date(2021, 1, 1);
-  let datePast = new Date(2020, 1, 1);
-  let datePastPast = new Date(2019, 1, 1);
+  let dateNow = new Date();
+  let datePast = new Date();
+  let datePastPast = new Date();
+  datePast.setDate(datePast.getDay() - 200);
+  datePastPast.setDate(datePastPast.getDay() - 300);
+
   testUtils.setupMessageStore([
     {
       type: EventTypeCredit.CREDITS_EARNED,
